@@ -1,5 +1,5 @@
-const CACHE='abuhamda-shell-v5';
-const ASSETS=['./','./index.html','./style.css','./storage.js','./app.js','./offline.js','./transfer.js','./reconcile.js','./model.js','./daily.js','./manifest.webmanifest','./icon.svg'];
+const CACHE='abuhamda-shell-v6';
+const ASSETS=['./','./index.html','./style.css','./storage.js','./app.js','./offline.js','./transfer.js','./reconcile.js','./model.js','./daily.js','./documents.js','./fonts/Cairo.woff2','./manifest.webmanifest','./icon.svg'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS))));
 self.addEventListener('message',event=>{if(event.data==='ACTIVATE')self.skipWaiting()});
 self.addEventListener('activate',event=>event.waitUntil((async()=>{for(const k of await caches.keys())if(k.startsWith('abuhamda-shell-')&&k!==CACHE)await caches.delete(k);await self.clients.claim()})()));
