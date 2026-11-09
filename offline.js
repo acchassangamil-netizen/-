@@ -1,4 +1,4 @@
-const APP_RELEASE='1.14';
+const APP_RELEASE='1.15';
 (async()=>{
  const check=document.getElementById('check-update'),status=document.querySelector('.offline');
  if(!('serviceWorker'in navigator)||location.protocol==='file:'){if(check)check.hidden=true;return}
