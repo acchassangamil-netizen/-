@@ -16,5 +16,8 @@ navigationGroups.forEach(g=>{
 });
 document.addEventListener('pointerdown',e=>{if(!mainNavigation.contains(e.target))closeNavigation()});
 mainNavigation.addEventListener('keydown',e=>{if(e.key!=='Escape')return;const open=navigationGroups.find(g=>g.open);if(open){e.preventDefault();closeNavigation();open.querySelector('summary').focus()}});
-mainNavigation.addEventListener('focusout',()=>{queueMicrotask(()=>{if(!mainNavigation.contains(document.activeElement))closeNavigation()})});
+// focusout occurs before the browser focuses the next menu button. Use the
+// destination, rather than activeElement, to avoid hiding it before click fires.
+mainNavigation.addEventListener('focusout',e=>{if(e.relatedTarget&&!mainNavigation.contains(e.relatedTarget))closeNavigation()});
 updateNavigation(view);
+
