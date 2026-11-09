@@ -1,5 +1,5 @@
-const CACHE='abuhamda-shell-v18';
-const RELEASE='1.18';
+const CACHE='abuhamda-shell-v19';
+const RELEASE='1.19';
 const ASSETS=['./','./index.html','./style.css','./storage.js','./app.js','./offline.js','./transfer.js','./reconcile.js','./model.js','./statement-model.js','./statements.js','./daily.js','./documents.js','./cash.js','./nav.js','./review.js','./fonts/Cairo.woff2','./manifest.webmanifest','./icon.svg'];
 self.addEventListener('install',event=>event.waitUntil((async()=>{const cache=await caches.open(CACHE);await cache.addAll(ASSETS.map(asset=>new Request(new URL(asset,self.registration.scope),{cache:'reload'})));await self.skipWaiting()})()));
 self.addEventListener('message',event=>{if(event.data==='ACTIVATE')self.skipWaiting();if(event.data==='GET_VERSION')event.ports?.[0]?.postMessage({release:RELEASE})});
