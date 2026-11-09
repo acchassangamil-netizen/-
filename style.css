@@ -57,3 +57,5 @@ dialog{border:1px solid #dfe5ee;border-radius:18px;padding:30px;width:min(760px,
  .document-preview p{color:#d4e1f1}
  footer{color:#5f738a}
 }
+
+.type-collection_pending{background:#fff4db;color:#8a5b10}.cash-account-code{font-size:10px;color:#526880;direction:ltr;unicode-bidi:plaintext}#cash-cards{margin-top:22px;grid-template-columns:repeat(3,minmax(0,1fr))}#cash-cards .cash-negative{color:#ad2037}#cash-account{max-width:280px}@media screen{#cash .panel:last-child .tablewrap{max-height:600px}#cash .panel:last-child th{position:sticky;top:0;z-index:2}}@media(max-width:650px){#cash-cards{grid-template-columns:1fr}#cash-cards article{padding:18px}#cash-cards strong{font-size:26px}}@media print{#cash .panel:last-child .tablewrap{max-height:none;overflow:visible}}
