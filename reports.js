@@ -25,7 +25,7 @@ function renderReports(){
  el('report-types').querySelectorAll('button[data-report]').forEach(b=>{b.classList.toggle('active',b.dataset.report===reportKind);b.setAttribute('aria-pressed',String(b.dataset.report===reportKind))});
  el('report-title').textContent=defs.find(x=>x[0]===reportKind)?.[1]||'تقرير';
  if(!valid()){info('تأكد أن تاريخ البداية يسبق أو يساوي تاريخ النهاية.');kpis([]);table(['الحالة'],[]);return}
- const a=rows(),c=cash(),sales=a.filter(x=>x.type==='sale'),collections=a.filter(x=>['collection','debt','collection_pending'].includes(x.type));
+ const a=rows(),c=cash();el('report-source-status').textContent='البيانات المحمّلة: '+number((state.transactions||[]).filter(t=>!t.cancelled).length)+' حركة مالية، و'+number((state.cashEntries||[]).filter(t=>!t.cancelled).length)+' حركة خزينة. داخل الفترة والفلاتر: '+number(a.length)+' حركة مالية، و'+number(c.length)+' حركة خزينة.';const sales=a.filter(x=>x.type==='sale'),collections=a.filter(x=>['collection','debt','collection_pending'].includes(x.type));
  const uniqueSales=new Set(sales.map(x=>[x.documentSeries||'',x.reference||x.id||''].join('|')));
  const gross=sum(sales,x=>x.amount),returned=sum(a.filter(x=>x.type==='return'),x=>x.amount),discount=sum(a.filter(x=>x.type==='discount'),x=>x.amount);
  const invoiceCount=sum(sales,x=>x.invoiceCount||((x.reference||x.id)?1:0));
@@ -73,7 +73,8 @@ function renderReports(){
 window.renderReports=renderReports;
 el('report-types').innerHTML=defs.map(([id,label])=>'<button type="button" data-report="'+id+'">'+label+'</button>').join('');
 el('report-types').onclick=e=>{const b=e.target.closest('[data-report]');if(b){reportKind=b.dataset.report;renderReports()}};
-for(const id of ['report-from','report-to','report-rep'])el(id).addEventListener('change',renderReports);
+for(const id of ['report-from','report-to','report-rep']){el(id).addEventListener('change',renderReports);el(id).addEventListener('input',renderReports)}
+el('report-refresh').onclick=async()=>{const b=el('report-refresh');b.disabled=true;b.textContent='جارٍ تحديث التقرير…';try{await refresh();renderReports();toast('تم تحديث التقرير من البيانات المحفوظة على هذا الجهاز')}catch(err){toast('تعذر تحديث التقرير: '+err.message,true)}finally{b.disabled=false;b.textContent='تحديث التقرير'}};
 el('report-from').value=today().slice(0,7)+'-01';el('report-to').value=today();
 el('report-export').onclick=()=>{
  if(!valid())return;
