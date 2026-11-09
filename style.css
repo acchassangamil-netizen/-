@@ -95,3 +95,15 @@ dialog{border:1px solid #dfe5ee;border-radius:18px;padding:30px;width:min(760px,
 .build-version{display:block;font-size:10px;font-weight:750;color:#315c50;margin-top:2px}#check-update{font-size:11px}@media(max-width:650px){.build-version{font-size:8px}.tools{flex-wrap:wrap}#update-app{font-size:10px}}
 
 .statement-kind{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px}.statement-kind button{display:flex;align-items:center;gap:10px;border:1px solid #c4cedc;background:#f4f7fb;color:#253e5c;padding:14px 20px;border-radius:12px;font-weight:750}.statement-kind button>span{font-size:24px;line-height:1}.statement-kind button.selected{background:#173551;border-color:#173551;color:#fff;box-shadow:0 4px 12px #17355126}.statement-filters{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;margin:20px 0}.statement-filters label{flex:1;min-width:170px}.statement-filters button{min-height:46px}@media(max-width:650px){.statement-kind{display:grid;grid-template-columns:1fr}.statement-kind button{justify-content:flex-start}.statement-filters label{min-width:130px}}
+
+/* Abu Hamda reports center */
+.report-filters{display:grid;grid-template-columns:repeat(3,minmax(170px,1fr));gap:16px;margin:12px 0 21px}
+.report-types{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 25px;padding-bottom:18px;border-bottom:1px solid var(--line)}
+.report-types button{white-space:normal;min-height:39px;padding:8px 12px;font-size:11px}
+.report-types button.active{color:#fff;background:var(--navy);border-color:var(--navy)}
+.report-cards{grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin:14px 0}
+.report-cards article strong{font-size:22px;overflow-wrap:anywhere}
+#reports #report-title{margin:7px 0 15px}
+#reports #report-info{margin:14px 0 18px}
+@media(max-width:760px){.report-filters{grid-template-columns:1fr}.report-types{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}#reports .panelhead{align-items:start;flex-wrap:wrap}}
+@media print{aside,header .tools,#report-types,.report-filters,#reports .panelhead .tools{display:none!important}body:has(#reports:not([hidden])) main>section:not(#reports),body:has(#reports:not([hidden])) main>footer{display:none!important}#reports .panel{box-shadow:none;border:0;padding:0}}
