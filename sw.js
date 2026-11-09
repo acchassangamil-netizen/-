@@ -1,4 +1,4 @@
-const CACHE='abuhamda-shell-v7';
+const CACHE='abuhamda-shell-v8';
 const ASSETS=['./','./index.html','./style.css','./storage.js','./app.js','./offline.js','./transfer.js','./reconcile.js','./model.js','./daily.js','./documents.js','./fonts/Cairo.woff2','./manifest.webmanifest','./icon.svg'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS))));
 self.addEventListener('message',event=>{if(event.data==='ACTIVATE')self.skipWaiting()});

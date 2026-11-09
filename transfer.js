@@ -8,7 +8,9 @@
   const decode=x=>Uint8Array.from(atob(x.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0));
   const key=await crypto.subtle.importKey('raw',decode(keyText),'AES-GCM',false,['decrypt']);
   const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:decode(packet.iv)},key,decode(packet.data));
-  const incoming=JSON.parse(new TextDecoder().decode(plain));OfflineStore.validate(incoming);
+  const incoming=JSON.parse(new TextDecoder().decode(plain));
+  if(incoming.schema==='alameen-sales-patch-v1'){incoming.transferId=id;await OfflineStore.request('/api/import-invoices',incoming);await refresh();notice.className='success';notice.textContent='تم إدخال '+incoming.documents.length+' فاتورة '+incoming.rep.name+' بأرقام سندات الأمين، مع استبعاد تجميع المبيعات القديم لنفس الفترة. بيانات الرصيد تحتاج استكمال المرتجعات والتحصيلات وأول المدة.';return}
+  OfflineStore.validate(incoming);
   const old=await OfflineStore.request('/api/state');
   if(old.importAudit?.transferId===id){notice.textContent='بيانات الشيت دي مستوردة بالفعل؛ تم الاحتفاظ بأي حركات أضفتها بعدها.';return}
   const populated=old.transactions.length||old.reps.some(x=>x.opening||x.target);
