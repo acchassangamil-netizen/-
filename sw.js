@@ -1,6 +1,6 @@
-const CACHE='abuhamda-shell-v12';
-const RELEASE='1.12';
-const ASSETS=['./','./index.html','./style.css','./storage.js','./app.js','./offline.js','./transfer.js','./reconcile.js','./model.js','./daily.js','./documents.js','./cash.js','./nav.js','./fonts/Cairo.woff2','./manifest.webmanifest','./icon.svg'];
+const CACHE='abuhamda-shell-v13';
+const RELEASE='1.13';
+const ASSETS=['./','./index.html','./style.css','./storage.js','./app.js','./offline.js','./transfer.js','./reconcile.js','./model.js','./daily.js','./documents.js','./cash.js','./nav.js','./review.js','./fonts/Cairo.woff2','./manifest.webmanifest','./icon.svg'];
 self.addEventListener('install',event=>event.waitUntil((async()=>{const cache=await caches.open(CACHE);await cache.addAll(ASSETS.map(asset=>new Request(new URL(asset,self.registration.scope),{cache:'reload'})));await self.skipWaiting()})()));
 self.addEventListener('message',event=>{if(event.data==='ACTIVATE')self.skipWaiting();if(event.data==='GET_VERSION')event.ports?.[0]?.postMessage({release:RELEASE})});
 self.addEventListener('activate',event=>event.waitUntil((async()=>{for(const k of await caches.keys())if(k.startsWith('abuhamda-shell-')&&k!==CACHE)await caches.delete(k);await self.clients.claim()})()));
