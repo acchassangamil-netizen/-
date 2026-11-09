@@ -1,8 +1,30 @@
+const APP_RELEASE='1.12';
 (async()=>{
- if(!('serviceWorker'in navigator)||location.protocol==='file:'){const n=document.createElement('p');n.className='hint';n.textContent='للتثبيت والعمل أوفلاين افتح نسخة HTTPS المنشورة، ثم افتحها مرة واحدة بالإنترنت.';document.querySelector('main').prepend(n);return}
- try{const r=await navigator.serviceWorker.register('./sw.js');const status=document.querySelector('.offline');function ready(){status.firstChild.textContent='● جاهز للعمل بدون إنترنت'}
- await navigator.serviceWorker.ready;ready();
- function offer(){if(!r.waiting)return;let b=document.getElementById('update-app');if(b)return;b=document.createElement('button');b.id='update-app';b.textContent='تحديث البرنامج متاح';b.onclick=()=>{if(!confirm('حُفظت الحركات السابقة. احفظ أي نموذج مفتوح قبل التحديث. تحديث الآن؟'))return;navigator.serviceWorker.addEventListener('controllerchange',()=>location.reload(),{once:true});r.waiting.postMessage('ACTIVATE')};document.querySelector('.tools').append(b)}
- offer();r.addEventListener('updatefound',()=>{const w=r.installing;w?.addEventListener('statechange',()=>{if(w.state==='installed'&&navigator.serviceWorker.controller)offer()})});window.addEventListener('online',()=>r.update().catch(()=>{}));
- }catch(e){document.querySelector('.offline').firstChild.textContent='● لم يكتمل تجهيز الأوفلاين'}
+ const check=document.getElementById('check-update'),status=document.querySelector('.offline');
+ if(!('serviceWorker'in navigator)||location.protocol==='file:'){if(check)check.hidden=true;return}
+ let registration,changed=false,wasControlled=!!navigator.serviceWorker.controller;
+ function notice(text,bad=false){const n=document.getElementById('notice');if(n){n.textContent=text;n.className=bad?'error':'success'}}
+ function reloadButton(){
+  let button=document.getElementById('update-app');if(button)return;
+  button=document.createElement('button');button.id='update-app';button.textContent='تطبيق آخر تحديث';button.className='primary';
+  button.onclick=()=>{if(!confirm('احفظ أي نموذج مفتوح قبل تطبيق التحديث. تحديث الآن؟'))return;
+   if(registration?.waiting){navigator.serviceWorker.addEventListener('controllerchange',()=>location.reload(),{once:true});registration.waiting.postMessage('ACTIVATE')}
+   else location.reload();
+  };
+  document.querySelector('header .tools')?.append(button);
+ }
+ function inspect(){if(registration?.waiting||changed)reloadButton()}
+ function watch(worker){if(!worker)return;worker.addEventListener('statechange',()=>{setTimeout(inspect,0);if(worker.state==='redundant')notice('تعذر تنزيل التحديث كاملًا؛ النسخة الحالية ما زالت متاحة. أعد المحاولة مع اتصال الإنترنت.',true)})}
+ navigator.serviceWorker.addEventListener('controllerchange',()=>{if(wasControlled){changed=true;reloadButton()}else wasControlled=true});
+ try{
+  registration=await navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'});
+  registration.addEventListener('updatefound',()=>watch(registration.installing));watch(registration.installing);
+  await navigator.serviceWorker.ready;if(status?.firstChild)status.firstChild.textContent='● جاهز للعمل بدون إنترنت';inspect();
+  if(check)check.onclick=async()=>{check.disabled=true;check.textContent='جارٍ فحص التحديث…';try{
+   await registration.update();watch(registration.installing);
+   if(registration.installing)await new Promise(resolve=>{const worker=registration.installing;const timer=setTimeout(resolve,15000);worker.addEventListener('statechange',()=>{if(['installed','activated','redundant'].includes(worker.state)){clearTimeout(timer);resolve()}})});
+   inspect();if(changed||registration.waiting){notice('التحديث جاهز. اضغط «تطبيق آخر تحديث».')}else notice('النسخة المفتوحة: '+APP_RELEASE+'؛ اكتمل فحص التحديثات. إذا ظل الشريط القديم ظاهرًا، أغلق تبويبات البرنامج وافتحه مجددًا.');
+  }catch(e){notice('تعذر فحص التحديثات؛ تحقق من الإنترنت ثم أعد المحاولة.',true)}finally{check.disabled=false;check.textContent='فحص التحديثات'}};
+  window.addEventListener('online',()=>registration.update().catch(()=>{}));
+ }catch(e){if(status?.firstChild)status.firstChild.textContent='● لم يكتمل تجهيز الأوفلاين';if(check)check.onclick=()=>location.reload()}
 })();

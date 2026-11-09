@@ -91,3 +91,5 @@ dialog{border:1px solid #dfe5ee;border-radius:18px;padding:30px;width:min(760px,
 }
 
 @media(max-width:650px){#main-nav{grid-template-columns:minmax(0,1fr) minmax(0,.9fr) minmax(0,1.4fr) minmax(0,.8fr)}#main-nav>button{min-width:0;white-space:normal}#main-nav>button>.nav-icon{display:none}#main-nav>button>span:last-child{white-space:normal;line-height:1.6}}
+
+.build-version{display:block;font-size:10px;font-weight:750;color:#315c50;margin-top:2px}#check-update{font-size:11px}@media(max-width:650px){.build-version{font-size:8px}.tools{flex-wrap:wrap}#update-app{font-size:10px}}
