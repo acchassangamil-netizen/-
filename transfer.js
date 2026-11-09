@@ -9,6 +9,7 @@
   const key=await crypto.subtle.importKey('raw',decode(keyText),'AES-GCM',false,['decrypt']);
   const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:decode(packet.iv)},key,decode(packet.data));
   const incoming=JSON.parse(new TextDecoder().decode(plain));
+  if(incoming.schema==='alameen-multi-sales-patch-v1'){incoming.transferId=id;await OfflineStore.request('/api/import-sales-batch',incoming);await refresh();notice.className='success';notice.textContent='تم إدخال '+incoming.expectedCount+' فاتورة من ملف الأمين لعدد '+incoming.groups.length+' مناديب / جهات، مع استبعاد تجميع المبيعات القديم لنفس الفترة. الأرصدة تحتاج استكمال المرتجعات والتحصيلات وأول المدة.';return}
   if(incoming.schema==='alameen-sales-patch-v1'){incoming.transferId=id;await OfflineStore.request('/api/import-invoices',incoming);await refresh();notice.className='success';notice.textContent='تم إدخال '+incoming.documents.length+' فاتورة '+incoming.rep.name+' بأرقام سندات الأمين، مع استبعاد تجميع المبيعات القديم لنفس الفترة. بيانات الرصيد تحتاج استكمال المرتجعات والتحصيلات وأول المدة.';return}
   OfflineStore.validate(incoming);
   const old=await OfflineStore.request('/api/state');
