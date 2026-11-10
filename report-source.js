@@ -1,6 +1,7 @@
 /* Read-only invoice line catalog imported from the user's Al Ameen PDF. */
 (function(){
 const storageKey='abuhamda-report-links-v1';
+const sourceKey='abuhamda-report-details-v1';
 let source={rows:[]},loaded=false,error='',links={};
 try{const raw=localStorage.getItem(storageKey);if(raw&&raw.length<300000){const parsed=JSON.parse(raw);if(parsed&&typeof parsed==='object'&&!Array.isArray(parsed))links=parsed}}catch(e){}
 function key(x){return x.date+'|'+x.series+'|'+x.invoice}
@@ -35,16 +36,30 @@ function assign(){
  try{localStorage.setItem(storageKey,JSON.stringify(links))}catch(e){alert('تعذر حفظ ربط المندوب في هذا المتصفح: '+e.message);return}
  updateControls();if(typeof window.renderReports==='function')window.renderReports();
 }
-async function load(){
+
+function accept(data){
+ if(data?.schema!=='abuhamda-report-source-v1'||data?.nonFinancial!==true||!Array.isArray(data.rows)||data.rows.length>30000||data.rows.some(x=>!x.date||!x.invoice||!x.product||!x.customer||!Number.isFinite(x.quantity)||!Number.isFinite(x.amount)))throw Error('تنسيق ملف تفاصيل الفواتير غير صحيح');
+ source=data;loaded=true;error='';
+}
+function load(){
  try{
-  const response=await fetch('./report-source-2026-11-09.json',{cache:'no-cache'});
-  if(!response.ok)throw Error('HTTP '+response.status);
-  const result=await response.json();
-  if(result.schema!=='abuhamda-report-source-v1'||result.nonFinancial!==true||!Array.isArray(result.rows))throw Error('تنسيق بيانات المصدر غير صحيح');
-  source=result;loaded=true;error='';
- }catch(e){error=String(e.message||e)}
+  const raw=localStorage.getItem(sourceKey);
+  if(raw){accept(JSON.parse(raw));}
+  else{loaded=false;error='حمّل ملف تفاصيل الفواتير من جهازك من خلال زر الاستيراد أدناه';}
+ }catch(e){loaded=false;error=e.message||String(e)}
  updateControls();if(typeof window.renderReports==='function')window.renderReports();
 }
+document.getElementById('report-source-file').addEventListener('change',async e=>{
+ const file=e.target.files?.[0];if(!file)return;
+ try{
+  if(file.size>8_000_000)throw Error('حجم ملف التفاصيل أكبر من المسموح');
+  const raw=await file.text();const data=JSON.parse(raw);accept(data);
+  localStorage.setItem(sourceKey,JSON.stringify(data));
+  load();
+  if(typeof toast==='function')toast('تم تحميل تفاصيل '+data.rows.length+' سطر صنف في المتصفح فقط، دون تسجيل مبيعات جديدة.');
+ }catch(err){if(typeof toast==='function')toast('تعذر استيراد تفاصيل الفواتير: '+err.message,true)}
+ finally{e.target.value=''}
+});
 document.getElementById('report-link-invoice').addEventListener('change',e=>{const found=list().find(x=>x.key===e.target.value);document.getElementById('report-link-rep').value=found?.rep||''});
 document.getElementById('report-link-save').addEventListener('click',assign);
 window.ReportSource={get rows(){return source.rows},get loaded(){return loaded},get error(){return error},key,rep,list,updateControls};
