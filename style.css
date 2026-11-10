@@ -107,3 +107,8 @@ dialog{border:1px solid #dfe5ee;border-radius:18px;padding:30px;width:min(760px,
 #reports #report-info{margin:14px 0 18px}
 @media(max-width:760px){.report-filters{grid-template-columns:1fr}.report-types{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}#reports .panelhead{align-items:start;flex-wrap:wrap}}
 @media print{aside,header .tools,#report-types,.report-filters,#reports .panelhead .tools{display:none!important}body:has(#reports:not([hidden])) main>section:not(#reports),body:has(#reports:not([hidden])) main>footer{display:none!important}#reports .panel{box-shadow:none;border:0;padding:0}}
+
+.report-import-panel,.report-link-panel{border:1px solid var(--line);border-radius:12px;background:#f9fafc;padding:16px;margin:16px 0}
+.report-link-controls{display:grid;grid-template-columns:minmax(200px,2fr) minmax(160px,1fr) auto;gap:12px;align-items:end}
+.report-link-controls button{height:43px}
+@media(max-width:760px){.report-link-controls{grid-template-columns:1fr}}
