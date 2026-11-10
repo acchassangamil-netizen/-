@@ -3,7 +3,7 @@
 const defs=[
  ['sales','المبيعات والفواتير'],['collections','التحصيلات'],['returns','المرتجعات والخصومات'],
  ['debt','المديونية وحدودها'],['reps','مقارنة المناديب'],['customers','العملاء ونشاطهم'],
- ['products','الأصناف والكميات'],['invoices','تفاصيل الفواتير'],['treasury','الخزينة والتوريد'],['inventory','أرصدة المخزون']
+ ['products','الأصناف والكميات'],['invoices','تفاصيل الفواتير'],['unlinked','فواتير غير مربوطة'],['treasury','الخزينة والتوريد'],['inventory','أرصدة المخزون']
 ];
 let reportKind='sales',reportRows=[],reportHeaders=[];
 const el=id=>document.getElementById(id);
@@ -29,6 +29,13 @@ function renderReports(){
  const uniqueSales=new Set(sales.map(x=>[x.documentSeries||'',x.reference||x.id||''].join('|')));
  const gross=sum(sales,x=>x.amount),returned=sum(a.filter(x=>x.type==='return'),x=>x.amount),discount=sum(a.filter(x=>x.type==='discount'),x=>x.amount);
  const invoiceCount=sum(sales,x=>x.invoiceCount||((x.reference||x.id)?1:0));
+ const source=window.ReportSource,filters=pick();
+ const sourceAll=source?.loaded?source.rows.filter(x=>x.date>=filters.from&&x.date<=filters.to):[];
+ const sourceRows=sourceAll.filter(x=>!filters.rep||source.rep(x)===filters.rep);
+ const sourceInvoices=source?.loaded?source.list().filter(x=>x.date>=filters.from&&x.date<=filters.to&&(!filters.rep||x.rep===filters.rep)):[];
+ const sourceUnlinked=source?.loaded?source.list().filter(x=>x.date>=filters.from&&x.date<=filters.to&&!x.rep):[];
+ const sourceStatus=source?.loaded?'كشف الأصناف المستورد: '+number(sourceAll.length)+' سطر، '+number(sourceInvoices.length)+' فاتورة ضمن اختيارك، '+number(sourceUnlinked.length)+' فاتورة غير مربوطة بمندوب. هذه التفاصيل للعرض فقط ولا تدخل في إجمالي المبيعات أو المخزون.':'بيانات حركة تفاصيل الفواتير لم تُحمّل بعد'+(source?.error?' — '+source.error:'')+'.';
+ if(source?.loaded)source.updateControls();
  el('report-export').disabled=false;
  switch(reportKind){
  case 'sales':
@@ -52,17 +59,32 @@ function renderReports(){
   table(['المندوب','عدد الفواتير','إجمالي المبيعات','المرتجعات والخصومات','صافي المبيعات','التحصيلات','عدد العملاء المعروفين'],selected.map(r=>{const b=a.filter(t=>t.rep===r.id),s=b.filter(t=>t.type==='sale');return[r.name,number(sum(s,t=>t.invoiceCount||0)),val(sum(s,t=>t.amount)),val(sum(b.filter(t=>['return','discount'].includes(t.type)),t=>t.amount)),val(sum(s,t=>t.amount)-sum(b.filter(t=>['return','discount'].includes(t.type)),t=>t.amount)),val(sum(b.filter(t=>['collection','debt','collection_pending'].includes(t.type)),t=>t.amount)),number(new Set(s.map(t=>(t.customerName||'').trim()).filter(Boolean)).size)]}));
   kpis([['عدد المناديب',number(selected.length)],['إجمالي صافي المبيعات',val(gross-returned-discount)]]);info('مقارنة على الفترة المحددة. نشاط العملاء لا يشمل الفواتير التي لم يُسجل اسم عميلها.');break}
  case 'customers':{
-  const mapped=new Map(),unassigned=sales.filter(t=>!(t.customerName||'').trim());
-  for(const t of sales){const customer=(t.customerName||'').trim();if(!customer)continue;const key=t.rep+'|'+customer,v=mapped.get(key)||{customer,rep:t.rep,first:t.date,last:t.date,amount:0,count:0,records:0};v.first=v.first<t.date?v.first:t.date;v.last=v.last>t.date?v.last:t.date;v.amount+=t.amount;v.count+=t.invoiceCount||0;v.records++;mapped.set(key,v)}
-  const data=[...mapped.values()].sort((x,y)=>y.amount-x.amount);
-  kpis([['عملاء مميزون',number(new Set(data.map(x=>x.customer)).size)],['علاقات عميل/مندوب',number(data.length)],['فواتير دون اسم عميل',number(unassigned.length)]]);
-  table(['العميل','المندوب','عدد الفواتير','قيمة المبيعات','أول تعامل بالفترة','آخر تعامل بالفترة'],data.map(x=>[x.customer,name(x.rep),number(x.count),val(x.amount),x.first,x.last]));
-  info('هذا التقرير يعرض العملاء الذين تم تسجيل أسمائهم داخل حركات المبيعات. لا يمكن استنتاج عميل جديد أو متوقف بدقة دون سجل تاريخي كامل وربط الفواتير بالمندوب.');break}
- case 'products':
-  kpis([['حالة البيانات','غير متاحة']]);table(['الصنف','الكمية','القيمة'],[]);info('تفاصيل الأصناف والكميات موجودة في كشف الفواتير PDF المرسل، لكنها غير مرتبطة بعد بقاعدة بيانات الموقع. لن نخمن توزيعها على المناديب أو نخصمها من المخزون.');break;
- case 'invoices':
-  kpis([['حركات المبيعات',number(sales.length)],['عدد الفواتير المدخل',number(invoiceCount)],['مستندات مميزة',number(uniqueSales.size)]]);
-  table(['التاريخ','رقم الفاتورة / التجميع','المندوب','العميل','القيمة'],sales.map(t=>[t.date,t.reference||'حركة مجمعة',name(t.rep),t.customerName||'غير محدد',val(t.amount)]));info('تمييز رقم الفاتورة يعتمد على رقم المرجع والسلسلة. الحركات المجمعة تحتاج تفاصيل المصدر للوصول إلى فواتير منفصلة.');break;
+  if(source?.loaded){
+   const groups=new Map(),unique=new Set();
+   for(const t of sourceRows){const k=source.key(t),key=t.customer+'|'+(source.rep(t)||'');if(!groups.has(key))groups.set(key,{customer:t.customer,rep:source.rep(t),invoices:new Set(),qty:0,amount:0,products:new Set(),first:t.date,last:t.date});const g=groups.get(key);g.invoices.add(k);g.qty+=t.quantity;g.amount+=t.amount;g.products.add(t.product);g.first=g.first<t.date?g.first:t.date;g.last=g.last>t.date?g.last:t.date;unique.add(k)}
+   const list=[...groups.values()].sort((x,y)=>y.invoices.size-x.invoices.size);
+   kpis([['العملاء',number(new Set(list.map(x=>x.customer)).size)],['الفواتير من كشف الأصناف',number(unique.size)],['فواتير غير مربوطة',number(sourceUnlinked.length)],['العملاء في حركات الموقع',number(new Set(sales.map(x=>x.customerName).filter(Boolean)).size)]]);
+   table(['العميل','المندوب','عدد الفواتير','عدد الأصناف المختلفة','صافي كمية الحركة','صافي قيمة حركة المصدر','أول فاتورة','آخر فاتورة'],list.map(x=>[x.customer,x.rep?name(x.rep):'غير مربوط',x.invoices.size,x.products.size,number(x.qty),x.amount.toFixed(2),x.first,x.last]));
+   info(sourceStatus+' الإشارة السالبة للكميات والقيم مأخوذة كما هي من كشف الأمين؛ لا يتم إعادة احتسابها كمبيعات.');break;
+  }
+  kpis([['أسماء العملاء في حركات الموقع',number(new Set(sales.map(t=>(t.customerName||'').trim()).filter(Boolean)).size)]]);
+  table(['اسم العميل','المندوب','رقم المستند','قيمة البيع'],sales.filter(t=>t.customerName).map(t=>[t.customerName,name(t.rep),t.reference||'—',val(t.amount)]));info(sourceStatus);break}
+ case 'products':{
+  if(!source?.loaded){kpis([['حالة المصدر','غير متاح']]);table(['الصنف','الكمية','القيمة'],[]);info(sourceStatus);break}
+  const grouped=new Map();
+  for(const t of sourceRows){const key=t.product+'|'+t.unit;const g=grouped.get(key)||{product:t.product,unit:t.unit,quantity:0,amount:0,customers:new Set(),invoices:new Set()};g.quantity+=t.quantity;g.amount+=t.amount;g.customers.add(t.customer);g.invoices.add(source.key(t));grouped.set(key,g)}
+  const data=[...grouped.values()].sort((x,y)=>Math.abs(y.quantity)-Math.abs(x.quantity));
+  kpis([['الأصناف المختلفة',number(new Set(data.map(x=>x.product)).size)],['بنود الأصناف',number(sourceRows.length)],['الفواتير',number(sourceInvoices.length)]]);
+  table(['الصنف','الوحدة','صافي كمية الحركة','صافي قيمة حركة المصدر','عدد العملاء','عدد الفواتير'],data.map(x=>[x.product,x.unit,number(x.quantity),x.amount.toFixed(2),x.customers.size,x.invoices.size]));info(sourceStatus+' الكميات من كشف حركة الأصناف، ولا تخصم من رصيد المخزون الحالي.');break}
+ case 'invoices':{
+  if(!source?.loaded){kpis([['حركات مبيعات الموقع',number(sales.length)],['عدد الفواتير المدخل',number(invoiceCount)]]);table(['التاريخ','رقم الفاتورة','المندوب','القيمة'],sales.map(x=>[x.date,x.document?.invoiceNumber||x.reference||'حركة مجمعة',name(x.rep),val(x.amount)]));info(sourceStatus);break}
+  kpis([['فواتير كشف الأصناف',number(sourceInvoices.length)],['سطور الأصناف',number(sourceRows.length)],['فواتير غير مربوطة',number(sourceUnlinked.length)],['حركات مبيعات البرنامج',number(sales.length)]]);
+  table(['التاريخ','رقم الفاتورة','العميل','المندوب','الصنف','الكمية','الوحدة','السعر','قيمة حركة المصدر'],sourceRows.map(x=>[x.date,x.series+' '+x.invoice,x.customer,source.rep(x)?name(source.rep(x)):'غير مربوط',x.product,number(x.quantity),x.unit,x.price.toFixed(2),x.amount.toFixed(2)]));
+  info(sourceStatus+' رقم الفاتورة يختلف أحيانًا عن رقم سند الأمين؛ تم عرض الرقم الأصلي من كشف حركة الفواتير.');break}
+ case 'unlinked':{
+  kpis([['فواتير بلا مندوب',number(sourceUnlinked.length)],['عدد العملاء',number(new Set(sourceUnlinked.map(x=>x.customer)).size)]]);
+  table(['التاريخ','رقم فاتورة المصدر','العميل','عدد الأصناف','قيمة حركة المصدر','حالة الربط'],sourceUnlinked.map(x=>[x.date,x.series+' '+x.invoice,x.customer,x.count,x.value.toFixed(2),'يحتاج تحديد المندوب']));
+  info(sourceStatus+' اختر الفاتورة والمندوب من أداة الربط أعلى التقرير، ثم احفظ. الربط لا يغير المبيعات أو المخزون.');break}
  case 'treasury':
   kpis([['مقبوضات الخزينة',val(sum(c.filter(x=>x.kind==='collection'),x=>x.amountPiastres))],['التوريدات',val(sum(c.filter(x=>x.kind==='treasury'),x=>x.amountPiastres))],['صافي حركة النقدية',val(sum(c,x=>(x.kind==='collection'?1:-1)*x.amountPiastres))]]);
   table(['التاريخ','المندوب','السند','نوع الحركة','القيمة'],c.map(x=>[x.date,name(x.rep),x.voucherNumber||x.receiptNumber||'—',x.kind==='collection'?'تحصيل':'توريد للخزينة',val(x.amountPiastres)]));info('النتائج من سجلات النقدية المستوردة فقط، ولا تُضاعف تحصيلات مستندات المبيعات.');break;
