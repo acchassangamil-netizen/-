@@ -5,7 +5,7 @@ let source={rows:[]},loaded=false,error='',links={};
 try{const raw=localStorage.getItem(storageKey);if(raw&&raw.length<300000){const parsed=JSON.parse(raw);if(parsed&&typeof parsed==='object'&&!Array.isArray(parsed))links=parsed}}catch(e){}
 function key(x){return x.date+'|'+x.series+'|'+x.invoice}
 function txRep(x){
- if(!window.state||!Array.isArray(state.transactions))return '';
+ if(typeof state==='undefined'||!state||!Array.isArray(state.transactions))return '';
  const candidates=state.transactions.filter(t=>{
   if(t.cancelled||t.type!=='sale'||t.date!==x.date)return false;
   const numbers=[t.document?.invoiceNumber,t.document?.originNumber,t.reference,t.document?.number].filter(Boolean).map(String);
@@ -18,7 +18,7 @@ function rep(x){const k=key(x);return links[k]||txRep(x)}
 function list(){const seen=new Map();for(const x of source.rows){const k=key(x);if(!seen.has(k))seen.set(k,{...x,key:k,rep:rep(x),count:0,value:0});const t=seen.get(k);t.count++;t.value+=x.amount}return [...seen.values()]}
 function updateControls(){
  const invoice=document.getElementById('report-link-invoice'),repSelect=document.getElementById('report-link-rep');
- if(!invoice||!repSelect||!window.state)return;
+ if(!invoice||!repSelect||typeof state==='undefined'||!state)return;
  const old=invoice.value,records=list();
  invoice.innerHTML='<option value="">اختر فاتورة من كشف الأصناف</option>'+records.map(x=>'<option value="'+escape(x.key)+'">'+escape(x.date+' | '+x.invoice+' | '+x.customer+(x.rep?' ✓':' • غير مربوط'))+'</option>').join('');
  if(records.some(x=>x.key===old))invoice.value=old;
